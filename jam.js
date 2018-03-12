@@ -34,8 +34,8 @@ let _blue = (x, y, r, g, b, a) => {
 let vectorAsLine = (scale, rotate) => (v) => {
   let x1 = v.x * scale + Math.ceil(scale/2);
   let y1 = v.y * scale + Math.ceil(scale/2);
-  let x2 = 0.5 * scale * cos(v.angle * TWO_PI + HALF_PI) + x1;
-  let y2 = 0.5 * scale * sin(v.angle * TWO_PI + HALF_PI) + y1;
+  let x2 = scale * cos(v.angle * TWO_PI + rotate) + x1;
+  let y2 = scale * sin(v.angle * TWO_PI + rotate) + y1;
   line(x1, y1, x2, y2);
 };
 
