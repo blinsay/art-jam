@@ -29,13 +29,18 @@ let _blue = (x, y, r, g, b, a) => {
   return { x: x, y: y, angle: b / 255, length: 1 };
 };
 
+let scaleVec = (s) => (v) => {
+  v.length = s * v.length;
+  return v;
+};
+
 // drawing functions
 
 let vectorAsLine = (scale, rotate) => (v) => {
   let x1 = v.x * scale + Math.ceil(scale/2);
   let y1 = v.y * scale + Math.ceil(scale/2);
-  let x2 = scale * cos(v.angle * TWO_PI + rotate) + x1;
-  let y2 = scale * sin(v.angle * TWO_PI + rotate) + y1;
+  let x2 = v.length * cos(v.angle * TWO_PI + rotate) + x1;
+  let y2 = v.length * sin(v.angle * TWO_PI + rotate) + y1;
   line(x1, y1, x2, y2);
 };
 
@@ -47,7 +52,7 @@ var capture;
 function setup() {
   createCanvas(windowWidth, windowHeight);
   capture = createCapture(VIDEO);
-  capture.size(50, 50);
+  capture.size(60, 60);
 }
 
 function draw() {
@@ -60,7 +65,7 @@ function draw() {
     _green(x, y, r, g, b, a),
     _blue(x, y, r, g, b, a),
   ];
-  let drawVec = vectorAsLine(15, HALF_PI);
+  let drawVec = vectorAsLine(10, HALF_PI);
   capture.loadPixels();
-  mapCapture(capture, colorVectors).forEach((vecs) => vecs.forEach(drawVec));
+  mapCapture(capture, colorVectors).forEach((vecs) => vecs.map(scaleVec(5)).forEach(drawVec));
 }
