@@ -1,43 +1,48 @@
 /*jshint esnext: true */
 
-var capture;
-
-let pixelVectors = (capture, f) => {
-  let vs = [];
+let mapCapture = (capture, f) => {
+  let results = [];
   for (y = 0; y < capture.height; y++) {
     for (x = 0; x < capture.width; x++) {
       let i = (x + y * capture.width) * 4;
 
-      let {length, angle} = f(capture.pixels[i+0], capture.pixels[i+1], capture.pixels[i+2], capture.pixels[i+3]);
-      vs.push({x, y, angle, length});
+      results.push(
+        f(x, y, capture.pixels[i+0], capture.pixels[i+1], capture.pixels[i+2], capture.pixels[i+3])
+      );
     }
   }
 
-  return vs;
+  return results;
 };
 
-// vector functions
+// pixel -> vector functions
 
-let boringRed = (r, g, b, a) => {
-  return {length: 1, angle: r};
+let _red = (x, y, r, g, b, a) => {
+  return { x: x, y: y, angle: r / 255, length: 1 };
 };
 
-let colorMagnitudeAndAlpha = (r, g, b, a) => {
-  return {
-    angle: (r + g + b) * (a / 255),
-    length: (r / 255) * 1000,
-  };
+let _green = (x, y, r, g, b, a) => {
+  return { x: x, y: y, angle: g / 255, length: 1 };
+};
+
+let _blue = (x, y, r, g, b, a) => {
+  return { x: x, y: y, angle: b / 255, length: 1 };
+};
+
+// drawing functions
+
+let vectorAsLine = (scale, rotate) => (v) => {
+  let x1 = v.x * scale + Math.ceil(scale/2);
+  let y1 = v.y * scale + Math.ceil(scale/2);
+  let x2 = 0.5 * scale * cos(v.angle * TWO_PI + HALF_PI) + x1;
+  let y2 = 0.5 * scale * sin(v.angle * TWO_PI + HALF_PI) + y1;
+  line(x1, y1, x2, y2);
 };
 
 
-let rTheta = (r, g, b, a) => {
-  return {
-    angle: r,
-    length: 1,
-  };
-};
+// the sketch
 
-// p5 stuff
+var capture;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -50,27 +55,12 @@ function draw() {
   stroke(0, 0, 0, 150);
   strokeWeight(1);
 
-  let scale = 15;
+  let colorVectors = (x, y, r, g, b, a) => [
+    _red(x, y, r, g, b, a),
+    _green(x, y, r, g, b, a),
+    _blue(x, y, r, g, b, a),
+  ];
+  let drawVec = vectorAsLine(15, HALF_PI);
   capture.loadPixels();
-  pixelVectors(capture, (r, g, b, a) => { return {angle: r, length: 1}; }).forEach((v) => {
-    let x1 = v.x * scale + 2;
-    let y1 = v.y * scale + 2;
-    let x2 = 0.5 * scale * cos((v.angle / 255) * TWO_PI + HALF_PI) + x1;
-    let y2 = 0.5 * scale * sin((v.angle / 255) * TWO_PI + HALF_PI) + y1;
-    line(x1, y1, x2, y2);
-  });
-  pixelVectors(capture, (r, g, b, a) => { return {angle: -1 * g, length: 1}; }).forEach((v) => {
-    let x1 = v.x * scale + 2;
-    let y1 = v.y * scale + 2;
-    let x2 = 0.5 * scale * cos((v.angle / 255) * TWO_PI + HALF_PI) + x1;
-    let y2 = 0.5 * scale * sin((v.angle / 255) * TWO_PI + HALF_PI) + y1;
-    line(x1, y1, x2, y2);
-  });
-  pixelVectors(capture, (r, g, b, a) => { return {angle: b, length: 1}; }).forEach((v) => {
-    let x1 = v.x * scale + 2;
-    let y1 = v.y * scale + 2;
-    let x2 = 0.5 * scale * cos((v.angle / 255) * TWO_PI + HALF_PI) + x1;
-    let y2 = 0.5 * scale * sin((v.angle / 255) * TWO_PI + HALF_PI) + y1;
-    line(x1, y1, x2, y2);
-  });
+  mapCapture(capture, colorVectors).forEach((vecs) => vecs.forEach(drawVec));
 }
