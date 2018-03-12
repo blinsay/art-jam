@@ -17,55 +17,72 @@ let mapCapture = (capture, f) => {
 
 // pixel -> vector functions
 
-let _red = (x, y, r, g, b, a) => {
-  return { x: x, y: y, angle: r / 255, length: 1 };
+
+let projectRG = (_x, _y, r, g, b, a) => {
+  return createVector((r - 127)/ 127, (g - 127) / 127);
 };
 
-let _green = (x, y, r, g, b, a) => {
-  return { x: x, y: y, angle: g / 255, length: 1 };
+let redAngle = (x, y, r, g, b, a) => {
+  return p5.Vector.fromAngle((r - 127)/ 127 * TWO_PI);
 };
-
-let _blue = (x, y, r, g, b, a) => {
-  return { x: x, y: y, angle: b / 255, length: 1 };
-};
-
-let scaleVec = (s) => (v) => {
-  v.length = s * v.length;
-  return v;
-};
-
-// drawing functions
-
-let vectorAsLine = (scale, rotate) => (v) => {
-  let x1 = v.x * scale + Math.ceil(scale/2);
-  let y1 = v.y * scale + Math.ceil(scale/2);
-  let x2 = v.length * cos(v.angle * TWO_PI + rotate) + x1;
-  let y2 = v.length * sin(v.angle * TWO_PI + rotate) + y1;
-  line(x1, y1, x2, y2);
-};
-
 
 // the sketch
 
+var captureSize = 60;
+var scaleUp = 10;
+
 var capture;
+var walkers = [];
+
+let walkerPixel = (walker) => floor(walker.x) * captureSize + floor(walker.y);
+
+let newWalker = (x, y) => {
+    walkers.push(createVector(x, y));
+};
+
+let randomWalker = () => {
+  let x = floor(random() * captureSize);
+  let y = floor(random() * captureSize);
+  newWalker(x, y);
+};
+
+let minWalkers = 2000;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  capture = createCapture(VIDEO);
-  capture.size(60, 60);
+
+  background(0);
+  noStroke();
+  fill(255, 255, 255, 155);
+
+  capture = createCapture(VIDEO, () => {
+    background(0);
+  });
+  capture.size(captureSize, captureSize);
+
+  for (x = 0; x < captureSize; x++) {
+    newWalker(x, 0);
+  }
 }
 
 function draw() {
-  background(255, 255, 255, 255);
-  stroke(0, 0, 0, 150);
-  strokeWeight(1);
+  background(0, 0, 0, 20);
 
-  let colorVectors = (x, y, r, g, b, a) => [
-    _red(x, y, r, g, b, a),
-    _green(x, y, r, g, b, a),
-    _blue(x, y, r, g, b, a),
-  ];
-  let drawVec = vectorAsLine(10, HALF_PI);
   capture.loadPixels();
-  mapCapture(capture, colorVectors).forEach((vecs) => vecs.map(scaleVec(5)).forEach(drawVec));
+  let field = mapCapture(capture, redAngle);
+
+  walkers.forEach((walker) => {
+    let v = field[walkerPixel(walker)];
+    walker.add(field[walkerPixel(walker)]);
+  });
+
+  walkers = walkers.filter((w) => !(w.x < 0 || w.x >= captureSize || w.y < 0 || w.y >= captureSize));
+
+  walkers.forEach((w) => {
+    ellipse(w.x * scaleUp, w.y *scaleUp, 1, 1);
+  });
+
+  for (x = 0; x < captureSize; x++) {
+    randomWalker();
+  }
 }
