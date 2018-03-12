@@ -27,7 +27,7 @@ let projectRG = (_x, _y, r, g, b, a) => {
 };
 
 let redDownOnly = (_x, _y, r, g, b, a) => {
-  return createVector(0, (r - 127) / 127);
+  return createVector(0, r / 255);
 };
 
 // the sketch
@@ -44,14 +44,6 @@ let newWalker = (x, y) => {
     walkers.push(createVector(x, y));
 };
 
-let randomWalker = () => {
-  let x = floor(random() * captureSize);
-  let y = floor(random() * captureSize);
-  newWalker(x, y);
-};
-
-let minWalkers = 1000;
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -64,14 +56,15 @@ function setup() {
   });
   capture.size(captureSize, captureSize);
 
-  for (x = 0; x < captureSize; x++) {
-    newWalker(x, 0);
-    newWalker(0, x);
+  for (i = 0; i < captureSize; i++) {
+    for (j = 0; j < captureSize; j++) {
+      newWalker(i, j);
+    }
   }
 }
 
 function draw() {
-  background(0, 0, 0, 20);
+  background(0, 0, 0, 128);
 
   capture.loadPixels();
   let field = mapCapture(capture, redDownOnly);
@@ -79,7 +72,7 @@ function draw() {
   walkers.forEach((walker) => {
     let v = field[walkerPixel(walker)];
     walker.add(field[walkerPixel(walker)]);
-    walker.add(createVector(0, 0.2));
+    walker.add(createVector(0, 0.1));
   });
 
   walkers = walkers.filter((w) => !(w.x < 0 || w.x >= captureSize || w.y < 0 || w.y >= captureSize));
@@ -88,7 +81,7 @@ function draw() {
     ellipse(w.x * scaleUp, w.y *scaleUp, 1, 1);
   });
 
-  for (x = 0; x < (minWalkers - walkers.length); x++) {
+  for (x = 0; x < captureSize; x++) {
     newWalker(x, 0);
   }
 }
