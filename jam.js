@@ -1,5 +1,9 @@
 /*jshint esnext: true */
 
+// applies a function to every pixel in the capture. capture.loadPixels() must
+// be called for there to be any pixels in the capture.pixels array.
+//
+// f is passed the x, y coordinate of the pixel and its r, g, b and a values.
 let mapCapture = (capture, f) => {
   let results = [];
   for (y = 0; y < capture.height; y++) {
@@ -15,20 +19,6 @@ let mapCapture = (capture, f) => {
   return results;
 };
 
-// pixel -> vector functions
-
-
-let projectB = (_x, _y, r, g, b, a) => {
-  return createVector((b - 127)/ 127, (b - 127) / 127);
-};
-
-let projectRG = (_x, _y, r, g, b, a) => {
-  return createVector((r - 127)/ 127, (g - 127) / 127);
-};
-
-let redDownOnly = (_x, _y, r, g, b, a) => {
-  return createVector(0, r / 255);
-};
 
 // the sketch
 
@@ -67,7 +57,7 @@ function draw() {
   background(0, 0, 0, 128);
 
   capture.loadPixels();
-  let field = mapCapture(capture, redDownOnly);
+  let field = mapCapture(capture, (_x, _y, r, _g, _b, _a) => createVector(0, r / 255));
 
   walkers.forEach((walker) => {
     let v = field[walkerPixel(walker)];
