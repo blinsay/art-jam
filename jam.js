@@ -18,12 +18,16 @@ let mapCapture = (capture, f) => {
 // pixel -> vector functions
 
 
+let projectB = (_x, _y, r, g, b, a) => {
+  return createVector((b - 127)/ 127, (b - 127) / 127);
+};
+
 let projectRG = (_x, _y, r, g, b, a) => {
   return createVector((r - 127)/ 127, (g - 127) / 127);
 };
 
-let redAngle = (x, y, r, g, b, a) => {
-  return p5.Vector.fromAngle((r - 127)/ 127 * TWO_PI);
+let redDownOnly = (_x, _y, r, g, b, a) => {
+  return createVector(0, (r - 127) / 127);
 };
 
 // the sketch
@@ -34,7 +38,7 @@ var scaleUp = 10;
 var capture;
 var walkers = [];
 
-let walkerPixel = (walker) => floor(walker.x) * captureSize + floor(walker.y);
+let walkerPixel = (walker) => floor(walker.y) * captureSize + floor(walker.x);
 
 let newWalker = (x, y) => {
     walkers.push(createVector(x, y));
@@ -46,7 +50,7 @@ let randomWalker = () => {
   newWalker(x, y);
 };
 
-let minWalkers = 2000;
+let minWalkers = 1000;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -62,6 +66,7 @@ function setup() {
 
   for (x = 0; x < captureSize; x++) {
     newWalker(x, 0);
+    newWalker(0, x);
   }
 }
 
@@ -69,11 +74,12 @@ function draw() {
   background(0, 0, 0, 20);
 
   capture.loadPixels();
-  let field = mapCapture(capture, redAngle);
+  let field = mapCapture(capture, redDownOnly);
 
   walkers.forEach((walker) => {
     let v = field[walkerPixel(walker)];
     walker.add(field[walkerPixel(walker)]);
+    walker.add(createVector(0, 0.2));
   });
 
   walkers = walkers.filter((w) => !(w.x < 0 || w.x >= captureSize || w.y < 0 || w.y >= captureSize));
@@ -82,7 +88,7 @@ function draw() {
     ellipse(w.x * scaleUp, w.y *scaleUp, 1, 1);
   });
 
-  for (x = 0; x < captureSize; x++) {
-    randomWalker();
+  for (x = 0; x < (minWalkers - walkers.length); x++) {
+    newWalker(x, 0);
   }
 }
